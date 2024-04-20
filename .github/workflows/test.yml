@@ -1,0 +1,15 @@
+name: Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: 'Script to run'
+        required: true
+        default: 'echo "Hello, World!"'
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Run script
+            run: ${{ github.event.inputs.script }}
