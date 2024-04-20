@@ -1,0 +1,2 @@
+-W .\.github\workflows\test.yml
+-e .\.github\workflows\test.json

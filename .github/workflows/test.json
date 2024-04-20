@@ -1,0 +1,6 @@
+{
+  "inputs": {
+    "script": "echo Version $VERSION\necho 'Hello, world!'",
+    "script1": "./script.sh"
+  }
+}

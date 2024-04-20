@@ -6,10 +6,65 @@ on:
       script:
         description: 'Script to run'
         required: true
-        default: 'echo "Hello, World!"'
+
 jobs:
-    test:
-        runs-on: ubuntu-latest
-        steps:
-          - name: Run script
-            run: ${{ github.event.inputs.script }}
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump Event
+        run: |
+          echo "${{ toJSON(github) }}"
+          echo "${{ toJSON(job) }}"
+          echo "${{ toJSON(steps) }}"
+          echo "${{ toJSON(runner) }}"
+          echo "${{ toJSON(strategy) }}"
+          echo "${{ toJSON(matrix) }}"
+          echo "The job_id is: $GITHUB_JOB"   # reference the default environment variables
+          echo "The id of this action is: $GITHUB_ACTION"   # reference the default environment variables
+          echo "The run id is: $GITHUB_RUN_ID"
+          echo "The GitHub Actor's username is: $GITHUB_ACTOR"
+          echo "GitHub SHA: $GITHUB_SHA"
+
+
+      - name: Init Output
+        id: init
+        run: echo "version=1.2.3" >> $GITHUB_OUTPUT
+
+      - name: Mock Script
+        id: mock
+        run: >
+          cat > script.sh <<EOF
+            echo "Version: \$VERSION"
+            echo "Hello World"
+          EOF  
+
+      - name: Run script
+        env:
+          VERSION: ${{ steps.init.outputs.version }}
+        run: |
+          echo "Running script"
+          echo "Output: ${{ toJSON(steps) }}"
+          echo "Script: ${{ github.event.inputs.script }}"
+          chmod +x "${{ github.event.inputs.script }}" 2>/dev/null || true | bash
+          eval "${{ github.event.inputs.script }}"
+
+
+      - name: Mock Script 2
+        id: mock2
+        run: |
+          script=" \
+            echo 'Hello World\n' /n\
+            echo 'Version: \$VERSION' \
+          "
+          echo "script=$script" >> $GITHUB_OUTPUT
+          
+
+      - name: Run script 2
+        env:
+          VERSION: ${{ steps.init.outputs.version }}
+        run: |
+          echo "Running script"
+          echo "Output: ${{ toJSON(steps) }}"
+          echo "Script: ${{ steps.mock2.outputs.script }}"
+          chmod +x "${{ steps.mock2.outputs.script }}" 2>/dev/null || true | bash
+          eval echo "${{ steps.mock2.outputs.script }}"
