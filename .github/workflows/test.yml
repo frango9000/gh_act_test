@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Dump Event
+        if: false
         run: |
           echo "${{ toJSON(github) }}"
           echo "${{ toJSON(job) }}"
@@ -31,6 +32,7 @@ jobs:
         run: echo "version=1.2.3" >> $GITHUB_OUTPUT
 
       - name: Mock Script
+        if: false
         id: mock
         run: >
           cat > script.sh <<EOF
@@ -39,6 +41,7 @@ jobs:
           EOF  
 
       - name: Run script
+        if: false
         env:
           VERSION: ${{ steps.init.outputs.version }}
         run: |
@@ -48,23 +51,18 @@ jobs:
           chmod +x "${{ github.event.inputs.script }}" 2>/dev/null || true | bash
           eval "${{ github.event.inputs.script }}"
 
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          path: "gc_act_test"
 
-      - name: Mock Script 2
-        id: mock2
-        run: |
-          script=" \
-            echo 'Hello World\n' /n\
-            echo 'Version: \$VERSION' \
-          "
-          echo "script=$script" >> $GITHUB_OUTPUT
-          
+      - run: cd gc_act_test
 
       - name: Run script 2
+        uses: ./.github/actions/test
         env:
           VERSION: ${{ steps.init.outputs.version }}
-        run: |
-          echo "Running script"
-          echo "Output: ${{ toJSON(steps) }}"
-          echo "Script: ${{ steps.mock2.outputs.script }}"
-          chmod +x "${{ steps.mock2.outputs.script }}" 2>/dev/null || true | bash
-          eval echo "${{ steps.mock2.outputs.script }}"
+        with:
+          script: |
+            echo "Version: \$VERSION"
+            echo "Hello World"

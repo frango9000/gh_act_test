@@ -1,0 +1,19 @@
+name: Test Script
+description: 'Test a script'
+
+inputs:
+  script:
+    description: 'Script to run'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Run script
+      shell: bash
+      run: |
+        echo "input: ${{ toJSON(inputs.script) }}"
+        echo "Running script"
+        echo "Script: ${{ inputs.script }}"
+        chmod +x "${{ inputs.script }}" 2>/dev/null || true | bash
+        eval "${{ inputs.script }}"
