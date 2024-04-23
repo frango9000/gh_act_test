@@ -1,6 +1,7 @@
 {
   "inputs": {
     "script": "echo Version $VERSION\necho 'Hello, world!'",
-    "script1": "./script.sh"
+    "script1": "./script.sh",
+    "release-version": "v1.0.0"
   }
 }

@@ -7,6 +7,18 @@ on:
         description: 'Script to run'
         required: true
         type: string
+      script2:
+        description: 'Script to run 2'
+        required: false
+        type: string
+      release-version:
+        description: 'Release version'
+        required: false
+        type: string
+      bundle-version:
+        description: 'Bundle version'
+        required: false
+        type: string
       pre-release-script-continue-on-error:
         description: 'Continue on error'
         required: false
@@ -22,9 +34,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      FILE_NAME: "markdown.md"
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Dump Event
         run: |
@@ -40,30 +54,150 @@ jobs:
           echo "The GitHub Actor's username is: $GITHUB_ACTOR"
           echo "GitHub SHA: $GITHUB_SHA"
 
-      - name: Init Output
-        if: inputs.boolean == true
-        id: init
+      - name: Update versions.json
+        working-directory: ${{ runner.temp }}
+        shell: bash
         run: |
-          echo "Version 1: 1.2.3"
-          echo "version=1.2.3" >> $GITHUB_OUTPUT
+          set -e
+          file="powertoys-versions.json"
+          version="${{ inputs.release-version }}"
+          now=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          if [ ! -f "$file" ]; then
+            echo "{}" > "$file"
+          fi
+          # Update or add the version entry
+          jq --arg v "$version" --arg d "$now" '.[$v]=$d' "$file" > tmp.json && mv tmp.json "$file"
+          cat "$file"
 
-      - name: Echo Version
+      - name: cat after
         run: |
-          echo "Version 2: ${{ steps.init.outputs.version }}"
+          echo "cat after"
+          cat powertoys-versions.json
 
-      - name: Run script 1
-        continue-on-error: ${{ inputs.pre-release-script-continue-on-error == 'true' }}
-        uses: ./.github/actions/test
-        env:
-          VERSION: ${{ steps.init.outputs.version }}
-        with:
-          script: ./script.sh
+#      - name: Test multiline
+#        run: |
+#          echo "${{ format('{0}{1}{2}{1}',
+#            'line 1',
+#            'line 2',
+#            'line 3'
+#          ) }}"
+#
+#
+#      - name: Test multiline 2
+#        run: |
+#          echo "${{ false && 'line 1' || 'line 2' }}"
 
-      - name: Run script 2
-        uses: ./.github/actions/test
-        env:
-          VERSION: ${{ steps.init.outputs.version }}
-        with:
-          script: |
-            echo "Version: \$VERSION"
-            echo "Hello World 2"
+#      - name: prepare
+#        id: variables
+#        run: |
+#          echo "target='Zapier Integration version'" >> $GITHUB_OUTPUT
+#          BUNDLE_VERSION="v${{ inputs.bundle-version }}"
+#          RELEASE_VERSION="v${{ inputs.release-version }}"
+#          content="| $BUNDLE_VERSION | $RELEASE_VERSION |"
+#          echo "content=$content" >> $GITHUB_OUTPUT
+#
+#      - name: Append new version at the end of the file
+#        run: |
+#            echo "${{ steps.variables.outputs.content }}" >> ${{ env.FILE_NAME }}
+#            echo "${{ steps.variables.outputs.content }}" >> ${{ env.FILE_NAME }}
+#            echo "${{ steps.variables.outputs.content }}" >> ${{ env.FILE_NAME }}
+#            echo "${{ steps.variables.outputs.content }}" >> ${{ env.FILE_NAME }}
+#            echo "${{ steps.variables.outputs.content }}" >> ${{ env.FILE_NAME }}
+#
+#      - name: sout
+#        run: cat ${{ env.FILE_NAME }}
+
+
+#      - name: Dump Event
+#        run: |
+#          echo "${{ toJSON(github) }}"
+#          echo "${{ toJSON(job) }}"
+#          echo "${{ toJSON(steps) }}"
+#          echo "${{ toJSON(runner) }}"
+#          echo "${{ toJSON(strategy) }}"
+#          echo "${{ toJSON(matrix) }}"
+#          echo "The job_id is: $GITHUB_JOB"   # reference the default environment variables
+#          echo "The id of this action is: $GITHUB_ACTION"   # reference the default environment variables
+#          echo "The run id is: $GITHUB_RUN_ID"
+#          echo "The GitHub Actor's username is: $GITHUB_ACTOR"
+#          echo "GitHub SHA: $GITHUB_SHA"
+#
+#      - name: Init Output
+#        if: inputs.boolean == true
+#        id: init
+#        run: |
+#          echo "Version 1: 1.2.3"
+#          echo "version=1.2.3" >> $GITHUB_OUTPUT
+#
+#      - name: Echo Version
+#        run: |
+#          echo "Version 2: ${{ steps.init.outputs.version }}"
+#
+#      - name: Run script 1
+#        continue-on-error: ${{ inputs.pre-release-script-continue-on-error == 'true' }}
+#        uses: ./.github/actions/test
+#        env:
+#          VERSION: ${{ steps.init.outputs.version }}
+#        with:
+#          script: ./script.sh
+#
+#      - name: Run script 2
+#        uses: ./.github/actions/test
+#        env:
+#          VERSION: ${{ steps.init.outputs.version }}
+#        with:
+#          script: |
+#            echo "Version: \$VERSION"
+#            echo "Hello World 2"
+#
+#      - name: Check if script file exists
+#        id: find-secondary-version
+#        run: |
+#          if [[ -f "./script.sh" ]]; then
+#            echo "exists=true" >> $GITHUB_OUTPUT
+#          else
+#            echo "exists=false" >> $GITHUB_OUTPUT
+#          fi
+
+#      - name: Run script 2
+#        uses: ./.github/actions/test
+#        env:
+#          VERSION: ${{ steps.init.outputs.version }}
+#        with:
+#          script: |
+#            echo "Version: \$VERSION"
+#            echo "Hello World 2"
+#      - name: Run if script file exists
+#     #   if: steps.find-secondary-version.outputs.exists == 'true'
+#        run: |
+#          java -version
+#          mvn -v
+#          echo "Script file exists"
+#          echo "exists: ${{ steps.find-secondary-version.outputs.exists }}"
+#          echo "Version: ${{ steps.init.outputs.version }}"
+#          echo "Hello World 3"
+#          echo ${{ steps.find-secondary-version.outputs.exists == 'true' && './SECONDARY_VERSION' || '' }}
+
+#      - name: Continue on error
+#        id: continue-on-error
+#        continue-on-error: true
+#        run: |
+#          echo "This step will continue on error"
+#          exit 1
+#
+#      - name: Error message
+#        if: steps.continue-on-error.outcome == 'failure'
+#        run: |
+#          echo "This step will only run if the previous step failed"
+#          echo "Error message: ${{ steps.continue-on-error.conclusion }}"
+#          if [[ "${{ steps.continue-on-error.outcome }}" == "failure" ]]; then
+#            echo "The previous step failed"
+#          fi
+#
+#      - name: Run if env
+#        env:
+#          ENV_RUN: ${{ inputs.script2 && steps.continue-on-error.outcome == 'failure' }}
+#        if: env.ENV_RUN
+#        run: |
+#          echo "This step will run if the env variable ENV_RUN is true"
+#          echo "ENV_RUN: $ENV_RUN"
