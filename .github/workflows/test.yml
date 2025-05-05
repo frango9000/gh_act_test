@@ -55,7 +55,6 @@ jobs:
           echo "GitHub SHA: $GITHUB_SHA"
 
       - name: Update versions.json
-        working-directory: ${{ runner.temp }}
         shell: bash
         run: |
           set -e
@@ -68,11 +67,6 @@ jobs:
           # Update or add the version entry
           jq --arg v "$version" --arg d "$now" '.[$v]=$d' "$file" > tmp.json && mv tmp.json "$file"
           cat "$file"
-
-      - name: cat after
-        run: |
-          echo "cat after"
-          cat powertoys-versions.json
 
 #      - name: Test multiline
 #        run: |
